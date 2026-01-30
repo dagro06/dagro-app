@@ -1,20 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { USER_ID } from "@/lib/constants";
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get("status");
 
     const where: Record<string, unknown> = {
-      userId: session.user.id,
+      userId: USER_ID,
     };
 
     if (status) {
@@ -62,11 +56,6 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const body = await request.json();
     const { title, description, status, priority, dueDate, sourceMessageId, aiGenerated } =
       body;
@@ -78,10 +67,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get the max position for the status
     const maxPositionTask = await prisma.task.findFirst({
       where: {
-        userId: session.user.id,
+        userId: USER_ID,
         status: status || "todo",
       },
       orderBy: { position: "desc" },
@@ -91,7 +79,7 @@ export async function POST(request: NextRequest) {
 
     const task = await prisma.task.create({
       data: {
-        userId: session.user.id,
+        userId: USER_ID,
         title,
         description,
         status: status || "todo",

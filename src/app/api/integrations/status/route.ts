@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { IntegrationProvider } from "@/types";
+import { USER_ID } from "@/lib/constants";
 
 const allProviders: IntegrationProvider[] = [
   "clickup",
@@ -14,14 +13,9 @@ const allProviders: IntegrationProvider[] = [
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const userIntegrations = await prisma.integration.findMany({
       where: {
-        userId: session.user.id,
+        userId: USER_ID,
         isActive: true,
       },
     });
